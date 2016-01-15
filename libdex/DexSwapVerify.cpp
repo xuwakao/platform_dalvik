@@ -31,35 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef __BYTE_ORDER
-# error "byte ordering not defined"
-#endif
-
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-# define SWAP2(_value)      (_value)
-# define SWAP4(_value)      (_value)
-# define SWAP8(_value)      (_value)
-#else
-# define SWAP2(_value)      endianSwapU2((_value))
-# define SWAP4(_value)      endianSwapU4((_value))
-# define SWAP8(_value)      endianSwapU8((_value))
-static u2 endianSwapU2(u2 value) {
-    return (value >> 8) | (value << 8);
-}
-static u4 endianSwapU4(u4 value) {
-    /* ABCD --> CDAB --> DCBA */
-    value = (value >> 16) | (value << 16);
-    return ((value & 0xff00ff00) >> 8) | ((value << 8) & 0xff00ff00);
-}
-static u8 endianSwapU8(u8 value) {
-    /* ABCDEFGH --> EFGHABCD --> GHEFCDAB --> HGFEDCBA */
-    value = (value >> 32) | (value << 32);
-    value = ((value & 0xffff0000ffff0000ULL) >> 16) |
-            ((value << 16) & 0xffff0000ffff0000ULL);
-    return ((value & 0xff00ff00ff00ff00ULL) >> 8) |
-           ((value << 8) & 0xff00ff00ff00ff00ULL);
-}
-#endif
+#define SWAP2(_value)      (_value)
+#define SWAP4(_value)      (_value)
+#define SWAP8(_value)      (_value)
 
 #define SWAP_FIELD2(_field) (_field) = SWAP2(_field)
 #define SWAP_FIELD4(_field) (_field) = SWAP4(_field)
@@ -404,8 +378,8 @@ static bool swapMap(CheckState* state, DexMapList* pMap)
 
     SWAP_FIELD4(pMap->size);
     count = pMap->size;
-
-    CHECK_LIST_SIZE(item, count, sizeof(DexMapItem));
+    const u4 sizeOfItem = (u4) sizeof(DexMapItem);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_FIELD2(item->type);
@@ -1070,7 +1044,8 @@ static u1* swapFieldAnnotations(const CheckState* state, u4 count, u1* addr) {
     bool first = true;
     u4 lastIdx = 0;
 
-    CHECK_LIST_SIZE(item, count, sizeof(DexFieldAnnotationsItem));
+    const u4 sizeOfItem = (u4) sizeof(DexFieldAnnotationsItem);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_INDEX4(item->fieldIdx, state->pHeader->fieldIdsSize);
@@ -1099,7 +1074,8 @@ static u1* swapMethodAnnotations(const CheckState* state, u4 count, u1* addr) {
     bool first = true;
     u4 lastIdx = 0;
 
-    CHECK_LIST_SIZE(item, count, sizeof(DexMethodAnnotationsItem));
+    const u4 sizeOfItem = (u4) sizeof(DexMethodAnnotationsItem);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_INDEX4(item->methodIdx, state->pHeader->methodIdsSize);
@@ -1129,7 +1105,8 @@ static u1* swapParameterAnnotations(const CheckState* state, u4 count,
     bool first = true;
     u4 lastIdx = 0;
 
-    CHECK_LIST_SIZE(item, count, sizeof(DexParameterAnnotationsItem));
+    const u4 sizeOfItem = (u4) sizeof(DexParameterAnnotationsItem);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_INDEX4(item->methodIdx, state->pHeader->methodIdsSize);
@@ -1331,7 +1308,9 @@ static void* swapTypeList(const CheckState* state, void* ptr)
     SWAP_FIELD4(pTypeList->size);
     count = pTypeList->size;
     pType = pTypeList->list;
-    CHECK_LIST_SIZE(pType, count, sizeof(DexTypeItem));
+
+    const u4 sizeOfItem = (u4) sizeof(DexTypeItem);
+    CHECK_LIST_SIZE(pType, count, sizeOfItem);
 
     while (count--) {
         SWAP_INDEX2(pType->typeIdx, state->pHeader->typeIdsSize);
@@ -1352,7 +1331,9 @@ static void* swapAnnotationSetRefList(const CheckState* state, void* ptr) {
     SWAP_FIELD4(list->size);
     count = list->size;
     item = list->list;
-    CHECK_LIST_SIZE(item, count, sizeof(DexAnnotationSetRefItem));
+
+    const u4 sizeOfItem = (u4) sizeof(DexAnnotationSetRefItem);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_OFFSET4(item->annotationsOff);
@@ -1391,7 +1372,9 @@ static void* swapAnnotationSetItem(const CheckState* state, void* ptr) {
     SWAP_FIELD4(set->size);
     count = set->size;
     item = set->entries;
-    CHECK_LIST_SIZE(item, count, sizeof(u4));
+
+    const u4 sizeOfItem = (u4) sizeof(u4);
+    CHECK_LIST_SIZE(item, count, sizeOfItem);
 
     while (count--) {
         SWAP_OFFSET4(*item);
@@ -1765,7 +1748,8 @@ static void* swapTriesAndCatches(const CheckState* state, DexCode* code) {
     u4 count = code->triesSize;
     u4 lastEnd = 0;
 
-    CHECK_LIST_SIZE(tries, count, sizeof(DexTry));
+    const u4 sizeOfItem = (u4) sizeof(DexTry);
+    CHECK_LIST_SIZE(tries, count, sizeOfItem);
 
     while (count--) {
         u4 i;
@@ -1844,7 +1828,9 @@ static void* swapCodeItem(const CheckState* state, void* ptr) {
 
     count = item->insnsSize;
     insns = item->insns;
-    CHECK_LIST_SIZE(insns, count, sizeof(u2));
+
+    const u4 sizeOfItem = (u4) sizeof(u2);
+    CHECK_LIST_SIZE(insns, count, sizeOfItem);
 
     while (count--) {
         *insns = SWAP2(*insns);

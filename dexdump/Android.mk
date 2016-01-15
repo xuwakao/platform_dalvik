@@ -17,14 +17,17 @@
 #
 LOCAL_PATH:= $(call my-dir)
 
-dexdump_src_files := \
-		DexDump.cpp
+dexdump_src_files := DexDump.cpp
+dexdump_c_includes := dalvik
 
-dexdump_c_includes := \
-		dalvik
+dexdump_static_libraries_sdk := \
+    libdex \
+    libbase
 
 dexdump_static_libraries := \
-		libdex
+    $(dexdump_static_libraries_sdk) \
+    libutils \
+    liblog
 
 ##
 ##
@@ -38,20 +41,10 @@ LOCAL_MODULE := dexdump
 LOCAL_SRC_FILES := $(dexdump_src_files)
 LOCAL_C_INCLUDES := $(dexdump_c_includes)
 LOCAL_SHARED_LIBRARIES := libz liblog libutils
-LOCAL_STATIC_LIBRARIES := $(dexdump_static_libraries)
-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
-LOCAL_MODULE_TAGS := optional
+LOCAL_STATIC_LIBRARIES := $(dexdump_static_libraries_sdk)
 LOCAL_LDLIBS +=
+LOCAL_32_BIT_ONLY := true
 include $(BUILD_EXECUTABLE)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libdexdump_static
-LOCAL_SRC_FILES := $(dexdump_src_files)
-LOCAL_C_INCLUDES := $(dexdump_c_includes)
-LOCAL_STATIC_LIBRARIES := $(dexdump_static_libraries)
-LOCAL_SHARED_LIBRARIES := libutils
-LOCAL_MODULE_TAGS := optional
-include $(BUILD_STATIC_LIBRARY)
 
 endif # !SDK_ONLY
 
@@ -63,15 +56,11 @@ endif # !SDK_ONLY
 ##
 include $(CLEAR_VARS)
 LOCAL_MODULE := dexdump
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_HOST_OS := darwin linux windows
 LOCAL_SRC_FILES := $(dexdump_src_files)
 LOCAL_C_INCLUDES := $(dexdump_c_includes)
-LOCAL_STATIC_LIBRARIES := $(dexdump_static_libraries) liblog libutils
-
-ifneq ($(strip $(USE_MINGW)),)
-LOCAL_STATIC_LIBRARIES += libz
-else
-LOCAL_LDLIBS += -lpthread -lz
-endif
-
+LOCAL_STATIC_LIBRARIES := $(dexdump_static_libraries)
+LOCAL_STATIC_LIBRARIES_windows += libz
+LOCAL_LDLIBS_darwin += -lpthread -lz
+LOCAL_LDLIBS_linux += -lpthread -lz
 include $(BUILD_HOST_EXECUTABLE)
